@@ -1,15 +1,37 @@
-import { NextFunction, Request, Response } from 'express';
-import { logger } from '@utils/logger';
-import { HttpException } from '@/exceptions/HttpException';
+import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
+import { i18next } from '../config/i18n';
+import { StatusEnum } from '@/utils/statusEnum';
+import { ApiResponse } from '@/shared/ApiResponse';
+import { BaseException } from '@/exceptions/dto/BaseException';
+import { ValidationException } from '@/exceptions/ValidationException';
 
-export const ErrorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
+export const ErrorMiddleware = async (error: Error, req: Request, res: Response, next: NextFunction) => {
   try {
-    const status: number = error.status || 500;
-    const message: string = error.message || 'Something went wrong';
+    let status: StatusEnum;
+    let message: string;
+    let data: any;
 
-    logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}`);
-    res.status(status).json({ message });
-  } catch (error) {
-    next(error);
+    if (error instanceof BaseException) {
+      status = error.statusEnum;
+      message = i18next.t(status.key);
+      data = error.data;
+
+      if (error instanceof ValidationException) {
+        message = i18next.t(StatusEnum.VALIDATION_ERROR.message);
+        data = error.data.map(err => ({
+          property: err.property,
+          message: err.message,
+        }));
+      }
+    } else {
+      status = StatusEnum.INTERNAL_SERVER_ERROR_EXCEPTION;
+      message = i18next.t(status.key);
+    }
+
+    logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status.httpStatus}, Message:: ${message}`);
+    res.status(status.httpStatus).json(ApiResponse.error(status, message, data));
+  } catch (err) {
+    next(err);
   }
 };

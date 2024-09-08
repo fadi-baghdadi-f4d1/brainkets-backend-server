@@ -1,6 +1,7 @@
 import { CreateRateDto } from '@/dtos/rate.dto';
 import { Rate } from '@/interfaces/rate.interface';
 import { RateService } from '@/services/rate.service';
+import { ResponseUtil } from '@/utils/responseUtil';
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
 
@@ -12,7 +13,8 @@ export class RateController {
       const defaultCurrencyId: string | null = <string>req.query.defaultCurrencyId || null;
       const findAllRatesData: Rate[] = await this.rate.findAllRates(defaultCurrencyId);
 
-      res.status(200).json({ data: findAllRatesData, message: 'findAll' });
+      const response = await ResponseUtil.generateSuccessResponse(findAllRatesData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }
@@ -24,7 +26,8 @@ export class RateController {
 
       const createRateData: Rate = await this.rate.createRate(rateData);
 
-      res.status(200).json({ data: createRateData, message: 'Rate created successfully' });
+      const response = await ResponseUtil.generateSuccessResponse(createRateData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }

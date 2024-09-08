@@ -6,6 +6,7 @@ import ThemeModel from '@/models/theme.model';
 import CurrencyModel from '@/models/currency.model';
 import CurrencyFormatModel from '@/models/currencyFormat.model';
 import RateModel from '@/models/rate.model';
+import SmtpModel from '@/models/smtp.model';
 
 const sequelize = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
   dialect: 'mysql',
@@ -33,6 +34,7 @@ const Companies = CompanyModel(sequelize);
 const Themes = ThemeModel(sequelize);
 const Currencies = CurrencyModel(sequelize);
 const CurrencyFormats = CurrencyFormatModel(sequelize);
+const Smtps = SmtpModel(sequelize);
 const Rates = RateModel(sequelize);
 
 // Set up associations
@@ -44,6 +46,7 @@ export const DB = {
   Themes,
   Currencies,
   CurrencyFormats,
+  Smtps,
   Rates,
   sequelize, // connection instance (RAW queries)
   Sequelize, // library

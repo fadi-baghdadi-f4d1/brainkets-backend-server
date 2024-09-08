@@ -3,6 +3,7 @@ import { Container } from 'typedi';
 import { Company } from '@/interfaces/company.interface';
 import { CompanyService } from '@/services/company.service';
 import { UpdateCompanyDto } from '@/dtos/company.dto';
+import { ResponseUtil } from '@/utils/responseUtil';
 
 export class CompanyController {
   public company = Container.get(CompanyService);
@@ -12,7 +13,8 @@ export class CompanyController {
       const companyId = Number(req.params.id);
       const findOneCompanyData: Company = await this.company.findCompanyById(companyId);
 
-      res.status(200).json({ data: findOneCompanyData, message: 'findOne' });
+      const response = await ResponseUtil.generateSuccessResponse(findOneCompanyData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }
@@ -23,8 +25,8 @@ export class CompanyController {
       const companyId = Number(req.params.id);
       const companyData: UpdateCompanyDto = req.body;
       const updateCompanyData: Company = await this.company.updateCompany(companyId, companyData);
-
-      res.status(200).json({ data: updateCompanyData, message: 'updated' });
+      const response = await ResponseUtil.generateSuccessResponse(updateCompanyData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }

@@ -1,10 +1,10 @@
 import { Service } from 'typedi';
 import { DB } from '@database';
-import { HttpException } from '@/exceptions/HttpException';
 import { Theme } from '@/interfaces/theme.interface';
 import { UpdateThemeDto } from '@/dtos/theme.dto';
 import fs from 'fs-extra';
 import path from 'path';
+import { NotFoundException } from '@/exceptions/NotFoundException';
 
 @Service()
 export class ThemeService {
@@ -82,7 +82,7 @@ export class ThemeService {
 
   private async checkIfThemeExist(themeId: number): Promise<Theme> {
     const theme: Theme = await DB.Themes.findByPk(themeId);
-    if (!theme) throw new HttpException(409, "Theme doesn't exist");
+    if (!theme) throw new NotFoundException();
     return theme;
   }
 

@@ -1,9 +1,9 @@
 import { Service } from 'typedi';
 import { DB } from '@database';
-import { HttpException } from '@/exceptions/HttpException';
 import { Rate } from '@/interfaces/rate.interface';
 import { Op } from 'sequelize';
 import { CreateRateDto } from '@/dtos/rate.dto';
+import { NotFoundException } from '@/exceptions/NotFoundException';
 
 @Service()
 export class RateService {
@@ -23,7 +23,7 @@ export class RateService {
 
     if (defaultCurrencyId) {
       const defaultCurrency = await DB.Currencies.findByPk(defaultCurrencyId);
-      if (!defaultCurrency) throw new HttpException(409, "Currency doesn't exist");
+      if (!defaultCurrency) throw new NotFoundException();
 
       // Recalculate rates based on the provided default currency
       return this.calculateRatesBasedOnDefaultCurrency(latestRates, defaultCurrencyId);
@@ -41,7 +41,7 @@ export class RateService {
   private calculateRatesBasedOnDefaultCurrency(allRates: Rate[], defaultCurrencyId: string): Rate[] {
     // Find the rate for the default currency
     const defaultRate = allRates.find(rate => rate.currencyId === parseInt(defaultCurrencyId));
-    if (!defaultRate) throw new HttpException(409, "Exchange rate for default currency doesn't exist");
+    if (!defaultRate) throw new NotFoundException();
 
     // Perform the conversion for each currency based on the default currency's rate
     return allRates.map(rate => {
@@ -53,78 +53,4 @@ export class RateService {
       return rate;
     });
   }
-
-  // public async findCurrencyById(currencyId: number): Promise<Currency> {
-  //   const currency = await this.checkIfCurrencyExist(currencyId);
-  //   return currency;
-  // }
-
-  // public async createCurrency(currencyData: CreateCurrencyDto): Promise<Currency> {
-  //   // Check if a currency with the same name, symbol, or code already exists
-  //   const findCurrency: Currency = await DB.Currencies.findOne({
-  //     where: {
-  //       [Op.or]: [{ name: currencyData.name }, { symbol: currencyData.symbol }, { code: currencyData.code }],
-  //     },
-  //   });
-
-  //   // If currency with similar name, symbol, or code exists, throw an error
-  //   if (findCurrency) {
-  //     throw new HttpException(409, `Currency with the same name, symbol, or code already exists`);
-  //   }
-
-  //   // If isDefault is set to true, update the existing default currency
-  //   if (currencyData.isDefault) {
-  //     await this.updateDefaultCurrency();
-  //   }
-
-  //   // Create the new currency
-  //   const createCurrencyData: Currency = await DB.Currencies.create(currencyData);
-  //   return createCurrencyData;
-  // }
-
-  // public async updateCurrency(currencyId: number, currencyData: UpdateCurrencyDto): Promise<Currency> {
-  //   await this.checkIfCurrencyExist(currencyId);
-
-  //   // Build dynamic where condition
-  //   const whereConditions: any[] = [];
-  //   if (currencyData.name) {
-  //     whereConditions.push({ name: currencyData.name });
-  //   }
-  //   if (currencyData.symbol) {
-  //     whereConditions.push({ symbol: currencyData.symbol });
-  //   }
-  //   if (currencyData.code) {
-  //     whereConditions.push({ code: currencyData.code });
-  //   }
-
-  //   if (whereConditions.length > 0) {
-  //     const findCurrency: Currency = await DB.Currencies.findOne({
-  //       where: {
-  //         [Op.or]: whereConditions,
-  //         [Op.and]: { id: { [Op.ne]: currencyId } }, // Ensure it's not the current currency
-  //       },
-  //     });
-
-  //     // If a currency with similar name, symbol, or code exists, throw an error
-  //     if (findCurrency) {
-  //       throw new HttpException(409, `Currency with the same name, symbol, or code already exists`);
-  //     }
-  //   }
-
-  //   // If isDefault is set to true, update the existing default currency
-  //   if (currencyData.isDefault !== undefined && currencyData.isDefault) {
-  //     await this.updateDefaultCurrency();
-  //   }
-
-  //   // Update the currency
-  //   await DB.Currencies.update({ ...currencyData }, { where: { id: currencyId } });
-
-  //   const updateCurrency: Currency = await DB.Currencies.findByPk(currencyId);
-  //   return updateCurrency;
-  // }
-  // public async findCurrencyFormat(currencyFormatId: number): Promise<CurrencyFormat> {
-  //   const currencyFormat = await DB.CurrencyFormats.findByPk(currencyFormatId);
-  //   if (!currencyFormat) throw new HttpException(409, "Currency doesn't exist");
-  //   return currencyFormat;
-  // }
 }

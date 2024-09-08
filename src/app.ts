@@ -14,6 +14,13 @@ import { Routes } from '@interfaces/routes.interface';
 import { ErrorMiddleware } from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
 import path from 'path';
+import { ResponseMiddleware } from './middlewares/response.middleware';
+import middleware from 'i18next-http-middleware';
+import { ValidationException } from './exceptions/ValidationException';
+import { ResponseUtil } from './utils/responseUtil';
+import { StatusEnum } from './utils/statusEnum';
+import i18next from 'i18next';
+import { initI18next } from './config/i18n';
 
 export class App {
   public app: express.Application;
@@ -27,11 +34,11 @@ export class App {
 
     // Assuming your 'uploads' folder is in the root of your project
     const uploadsPath = path.join(__dirname, '../uploads');
-    // const uploadsPath = '/home/fadi/Desktop/workspace/brainkit/backend-brankets/uploads'
 
     // Serve static files from the 'uploads' directory
     this.app.use('/uploads', express.static(uploadsPath));
 
+    this.initializeI18next();
     this.connectToDatabase();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
@@ -65,11 +72,34 @@ export class App {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
+    this.app.use(middleware.handle(i18next));
+    this.app.use(ResponseMiddleware);
+  }
+
+  private async initializeI18next() {
+    await initI18next();
+    this.app.use(middleware.handle(i18next));
   }
 
   private initializeRoutes(routes: Routes[]) {
     routes.forEach(route => {
-      this.app.use('/', route.router);
+      if (route.router && typeof route.router.use === 'function') {
+        this.app.use('/', (req, res, next) => {
+          Promise.resolve(route.router(req, res, next)).catch(error => {
+            if (error instanceof ValidationException) {
+              next(error);
+            } else {
+              ResponseUtil.generateErrorResponse(StatusEnum.INTERNAL_SERVER_ERROR_EXCEPTION)
+                .then(response => {
+                  res.status(response.statusCode).json(response);
+                })
+                .catch(next);
+            }
+          });
+        });
+      } else {
+        console.error(`Invalid router for route: ${route.constructor.name}`);
+      }
     });
   }
 

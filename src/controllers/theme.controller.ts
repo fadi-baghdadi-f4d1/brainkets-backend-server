@@ -1,6 +1,7 @@
 import { UpdateThemeDto } from '@/dtos/theme.dto';
 import { Theme } from '@/interfaces/theme.interface';
 import { ThemeService } from '@/services/theme.service';
+import { ResponseUtil } from '@/utils/responseUtil';
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
 
@@ -12,7 +13,8 @@ export class ThemeController {
       const themeId = Number(req.params.id);
       const findOneThemeData: Theme = await this.theme.findThemeById(themeId);
 
-      res.status(200).json({ data: findOneThemeData, message: 'findOne' });
+      const response = await ResponseUtil.generateSuccessResponse(findOneThemeData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }
@@ -28,7 +30,8 @@ export class ThemeController {
 
       const updateThemeData: Theme = await this.theme.updateTheme(themeId, themeData, files);
 
-      res.status(200).json({ data: updateThemeData, message: 'Theme updated successfully' });
+      const response = await ResponseUtil.generateSuccessResponse(updateThemeData);
+      res.status(response.statusCode).json(response);
     } catch (error) {
       next(error);
     }
